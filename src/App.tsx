@@ -1,17 +1,34 @@
 // import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "./index.css";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useSpring, animated } from "@react-spring/three";
-import { getProject } from "@theatre/core";
+import { ISequence, getProject } from "@theatre/core";
 import { editable as e, PerspectiveCamera, SheetProvider } from "@theatre/r3f";
 import { Mesh } from "three";
+import demoProjectState from "./state.json";
+
+const demoSheet = getProject("Demo Project", { state: demoProjectState }).sheet(
+	"Demo Sheet"
+);
 
 function App() {
-	const [hover, setHover] = useState(false);
-
+	const [playAnimation, setPlayAnimation] = useState(false);
+	type configSec = Parameters<ISequence["play"]>[0]; // i know this is unnecesary xD
+	const secuenceConfig: configSec = {
+		iterationCount: Infinity,
+		range: [0, 10],
+	};
+	useEffect(() => {
+		playAnimation
+			? demoSheet.sequence.play(secuenceConfig)
+			: demoSheet.sequence.pause();
+	}, [playAnimation]);
 	return (
 		<>
+			<button onClick={() => setPlayAnimation((p) => !p)} className="play_btn">
+				play animation{" "}
+			</button>
 			<Canvas
 				gl={{ preserveDrawingBuffer: true }}
 				camera={{
@@ -20,25 +37,31 @@ function App() {
 				}}
 				style={{ height: "100vh" }}
 			>
-				<SheetProvider sheet={getProject("Demo Project").sheet("Demo Sheet")}>
+				<SheetProvider sheet={demoSheet}>
 					<color attach={"background"} args={["black"]} />
 					<PerspectiveCamera
 						theatreKey="Camera"
 						makeDefault
 						position={[5, 5, -5]}
 						fov={75}
+						lookAt={[0, 0, 0]}
 						attachArray={undefined}
 						attachObject={undefined}
 						attachFns={undefined}
 					/>
 					<Cube />
-					<e.pointLight theatreKey="Light" position={[10, 10, 10]} />
+					{/* <e.pointLight theatreKey="Light" position={[10, 10, 10]} /> */}
 					<e.spotLight
 						theatreKey="Spot Light"
 						position={[10, 10, 10]}
 						color={"blue"}
 					/>
-					<ambientLight />
+					{/* <ambientLight /> */}
+					<e.mesh theatreKey="Floor">
+						<planeGeometry args={[20, 20, 20]} />
+						<meshPhongMaterial color={"gray"} wireframe={false} />
+					</e.mesh>
+					{/* <gridHelper /> */}
 				</SheetProvider>
 			</Canvas>
 		</>
